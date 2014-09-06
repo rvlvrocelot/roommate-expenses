@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class=page>
+  <h1>Hester Expense Page</h1>
+  <div class=metanav>
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  {% if session.logged_in %}
+     <br><a href="{{ url_for('payments')}}">Payments</a>
+  {% endif %}
+  </div>
+  <br>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+    <br>
+  {% endfor %}
+  
+</div>
+
+
+
+  {% if session.logged_in %}
+    <form action="{{ url_for('add_entry') }}" method=post class=add-entry>
+      <dl>
+	<dt>Name:
+	<dd> {{ session.user}}
+	<dd><input type =hidden name= person value= {{session.user}}>
+        <dt>Expense:
+        <dd><input type=text size=30 name=expense>
+        <dt>Amount:
+        <dd><input type=number name=amount >
+	<dt>Note:
+	<dd><input type=text size=30 name=note>
+        <dd><input type=submit value=Submit>
+      </dl>
+    </form>
+  <table class=table>
+  {% for entry in entries %}
+    <tr><td> {{entry.name}} </td> <td>  {{ entry.expense }}</td> <td>${{ entry.amount|safe }} </td> <td> {{entry.note|safe }} </td>
+    </tr>
+
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+  </ul>
+
+{% endif %}
+
+{% endblock %}
+
+

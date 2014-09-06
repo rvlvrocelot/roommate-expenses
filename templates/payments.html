@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class=page>
+  <h1>Hester Payments Page</h1>
+  <div class=metanav>
+  {% if not session.logged_in %}
+    <a href="{{ url_for('login') }}">log in</a>
+  {% else %}
+    <a href="{{ url_for('logout') }}">log out</a>
+  {% endif %}
+  {% if session.logged_in %}
+     <br><a href="{{ url_for('show_entries')}}">Expenses</a>
+  {% endif %}
+
+  </div>
+  <br>
+  {% for message in get_flashed_messages() %}
+    <div class=flash>{{ message }}</div>
+    <br>
+  {% endfor %}
+</div>
+
+
+
+  {% if session.logged_in %}
+    <form action="{{ url_for('add_payment') }}" method=post class=add-entry>
+      <dl>
+	<dt>I made a  payment to:
+	<select name = payee>
+		<option value= Andrew> Andrew </option>
+		<option value= Anita> Anita </option>
+		<option value= Ryder> Ryder </option>
+	</select>
+	<dd><input type =hidden name= payer value= {{session.user}}>
+        <dt>Amount:
+        <dd><input type=number name=amount>
+        <dd><input type=submit value=submit>
+      </dl>
+    </form>
+  <table class=table>
+
+  {% for entry in entries %}
+    {% if entry.payee == session.user %}
+    	<tr><td> {{entry.payee}} owes {{ entry.payer }}</td> <td>${{ -entry.amount|safe }} </td> <td> {{entry.note|safe }} </td>
+    {% else %}
+	<tr><td> {{entry.payer}} owes {{ entry.payee }}</td> <td>${{ entry.amount|safe }} </td> <td> {{entry.note|safe }} </td>
+    {% endif %}
+	
+
+    </tr>
+
+
+  {% else %}
+    <li><em>Unbelievable.  No entries here so far</em>
+  {% endfor %}
+  </table>
+  </ul>
+
+<h3>Payment History</h3>
+
+<table class=table>
+
+   {% for entry in history %}
+	<tr><td> {{entry.payer}} payed {{entry.payee}}</td> <td>$ {{ entry.amount|safe}} </td> <td>{{entry.date}}</td> </tr>
+
+
+   {% endfor %}
+
+</table>
+{% endif %}
+
+{% endblock %}
+
+
