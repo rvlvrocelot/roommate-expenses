@@ -28,6 +28,13 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
 
+def runScript(scriptName):
+    with closing(connect_db()) as db:
+        with app.open_resource('scripts/' + scriptName, mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+
+
 @app.before_request
 def before_request():
     g.db = connect_db()
@@ -39,6 +46,22 @@ def teardown_request(exception):
         db.close()
 
 @app.route('/')
+def home():
+    cur = g.db.execute('select announcement, details, id, user, Timestamp from announcements order by id desc limit 5')
+    entries = [dict(announcement=row[0], details=row[1],  key=row[2], user = row[3], timestamp = row[4]) for row in cur.fetchall()]
+    return render_template('home.html', entries=entries)
+
+@app.route('/add_announcement', methods=['POST'])
+def add_announcement():
+    if not session.get('logged_in'):
+        abort(401)
+    g.db.execute('insert into announcements (announcement, details,user) values (?, ?,?)',
+                 [request.form['announcement'], request.form['details'], request.form['user']])
+    g.db.commit()
+    flash('New entry was successfully posted')
+    return redirect(url_for('home'))
+
+@app.route('/expense')
 def show_entries():
     cur = g.db.execute('select expense, name, amount, note from entries order by id desc')
     entries = [dict(expense=row[0], name=row[1],  amount=row[2], note=row[3]) for row in cur.fetchall()]
@@ -75,6 +98,12 @@ def payments():
 	history = [dict(payer=row[0], payee=row[1], amount=row[2], date=row[3]) for row in cur2.fetchall()]	  
 	return render_template('payments.html',**locals())
 
+
+@app.route('/chores')
+def chores():
+    return render_template('chores.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -93,7 +122,7 @@ def login():
 	else:
 		session['logged_in'] = True
 		session['user'] = entries[0]['username']
-        	return redirect(url_for('show_entries'))
+        	return redirect(url_for('home'))
     return render_template('login.html', error=error)
 
 @app.route('/logout')
