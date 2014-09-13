@@ -2,7 +2,7 @@ drop table if exists weeklyChores;
 create table weeklyChores (
   id integer primary key autoincrement,
   person text not null,
-  chore text not null,
+  choreid integer not null,
   completed int not null
 );
 
@@ -16,6 +16,8 @@ values("Anita","Floors/Trash", 0);
 drop table if exists announcements;
 create table announcements (
   id integer primary key autoincrement,
+  user text not null, 
+  Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   announcement text not null,
   details text not null
 );

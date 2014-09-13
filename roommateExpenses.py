@@ -101,8 +101,30 @@ def payments():
 
 @app.route('/chores')
 def chores():
-    return render_template('chores.html')
+    cur = g.db.execute('''
 
+        SELECT person,choreDesc.desc,choreList.choreSub,completed,choreList.subComplete,choreList.id FROM weeklyChores
+        JOIN choreList ON weeklyChores.choreid = choreList.choreid
+        Join choreDesc ON weeklyChores.choreid = choreDesc.choreid
+        WHERE person = ? AND choreList.subComplete != 1;
+
+        ''',[session['user']])
+
+    entries = [dict(person=row[0], choreDesc=row[1], choreSub=row[2], choreComplete=row[3], subComplete=row[4], subID = row[5]) for row in cur.fetchall() ]
+    if not entries:
+        g.db.execute("UPDATE weeklyChores SET completed = 1 WHERE person = ?", [session['user']])
+        g.db.commit()
+    return render_template('chores.html', entries=entries)
+
+@app.route('/chores_update',methods=['POST'])
+def chores_update():
+    if not session.get('logged_in'):
+        abort(401)
+    for chorekeys in request.form:
+        print chorekeys
+        g.db.execute('UPDATE choreList SET subComplete = 1 WHERE id = ?',[chorekeys])
+    g.db.commit()
+    return redirect(url_for('chores'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

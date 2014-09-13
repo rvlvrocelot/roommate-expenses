@@ -3,12 +3,24 @@
 
   {% if session.logged_in %}
 
-<br><br><br>
+    <br><br><br>
+    {%if entries %}
+      <h1>{{entries[0].choreDesc}} </h1>
 
-<h1>Choooooooooooores</h1>
 
-{% endif %}
+      <form action="{{ url_for('chores_update') }}" method=post class=add-entry>
 
+        <ul>
+          {% for entry in entries %}
+            <li><label><input type=checkbox name={{entry.subID}} value=1>{{entry.choreSub}}</label></li>
+          {%endfor%}
+        </ul>
+        <input type="submit" value="Submit">
+      </form>
+    {%else%}
+      <h1>You are done for the week!</h1>
+    {% endif %}
+  {% endif %}
 {% endblock %}
 
 
