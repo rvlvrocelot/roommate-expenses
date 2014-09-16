@@ -7,6 +7,7 @@ from flask_bootstrap import Bootstrap
 import hashlib
 
 # configuration
+# the database is not in tmp on the deployed verson 
 DATABASE = '/tmp/expense.db'
 DEBUG = True
 SECRET_KEY = 'development key'
@@ -45,28 +46,32 @@ def teardown_request(exception):
     if db is not None:
         db.close()
 
+#Load the homepage where the announcements are displayed
 @app.route('/')
 def home():
-    cur = g.db.execute('select announcement, details, id, user, Timestamp from announcements order by id desc limit 5')
+    cur = g.db.execute('SELECT announcement, details, id, user, Timestamp FROM announcements ORDER BY id DESC LIMIT 5')
     entries = [dict(announcement=row[0], details=row[1],  key=row[2], user = row[3], timestamp = row[4]) for row in cur.fetchall()]
     return render_template('home.html', entries=entries)
 
+#Add an announcement to the homepage
 @app.route('/add_announcement', methods=['POST'])
 def add_announcement():
     if not session.get('logged_in'):
         abort(401)
-    g.db.execute('insert into announcements (announcement, details,user) values (?, ?,?)',
+    g.db.execute('INSERT INTO announcements (announcement, details,user) VALUES (?, ?,?)',
                  [request.form['announcement'], request.form['details'], request.form['user']])
     g.db.commit()
     flash('New entry was successfully posted')
     return redirect(url_for('home'))
 
+#Load the expense page where users can add roommate expenses
 @app.route('/expense')
 def show_entries():
-    cur = g.db.execute('select expense, name, amount, note from entries order by id desc')
+    cur = g.db.execute('SELECT expense, name, amount, note FROM entries ORDER BY id DESC')
     entries = [dict(expense=row[0], name=row[1],  amount=row[2], note=row[3]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
+#add an expense
 @app.route('/add', methods=['POST'])
 def add_entry():
     if not session.get('logged_in'):
@@ -79,6 +84,16 @@ def add_entry():
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
 
+#Load the payment page where users can track their payments to other users
+@app.route('/payments')
+def payments():
+    cur = g.db.execute('SELECT payer, payee, amount FROM payments WHERE payer = ? OR payee = ?',[session['user'], session['user']])
+    entries = [dict(payer=row[0], payee=row[1], amount=row[2]) for row in cur.fetchall() ]
+    cur2 = g.db.execute('select payer, payee, amount, Timestamp from paymentHistory order by id desc')
+    history = [dict(payer=row[0], payee=row[1], amount=row[2], date=row[3]) for row in cur2.fetchall()]   
+    return render_template('payments.html',**locals())
+
+#Add a payment
 @app.route('/add_payment', methods=['POST'])
 def add_payment():
 	if not session.get('logged_in'):
@@ -89,16 +104,8 @@ def add_payment():
 	g.db.commit()
 	return redirect(url_for('payments'))
 
-@app.route('/payments')
-def payments():
-	cur = g.db.execute('select payer, payee, amount from payments where payer = ? or payee = ?',[session['user'], session['user']])
-
-	entries = [dict(payer=row[0], payee=row[1], amount=row[2]) for row in cur.fetchall() ]
-	cur2 = g.db.execute('select payer, payee, amount, Timestamp from paymentHistory order by id desc')
-	history = [dict(payer=row[0], payee=row[1], amount=row[2], date=row[3]) for row in cur2.fetchall()]	  
-	return render_template('payments.html',**locals())
-
-
+#Load the chore page which shows the chores for the week for the user. There is a cron script called rotateChores.py that rotates the chores 
+#every week Monday morning
 @app.route('/chores')
 def chores():
     cur = g.db.execute('''
@@ -116,6 +123,7 @@ def chores():
         g.db.commit()
     return render_template('chores.html', entries=entries)
 
+#Update the chorepage when a user completes a chore
 @app.route('/chores_update',methods=['POST'])
 def chores_update():
     if not session.get('logged_in'):
@@ -126,6 +134,7 @@ def chores_update():
     g.db.commit()
     return redirect(url_for('chores'))
 
+#login and set the session name
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -147,6 +156,7 @@ def login():
         	return redirect(url_for('home'))
     return render_template('login.html', error=error)
 
+#log out: update the session
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)

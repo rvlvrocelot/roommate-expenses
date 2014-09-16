@@ -3,6 +3,7 @@ import sqlite3
 def assessFines(person):
 	pass
 
+#update on deployed
 conn = sqlite3.connect("/tmp/expense.db")
 c = conn.cursor()
 

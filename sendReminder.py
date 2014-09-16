@@ -3,8 +3,6 @@ import sqlite3
 from email.mime.text import MIMEText
 from collections import defaultdict
  
-#function to send an email that nags users if they dont do their chores. Query the DB to see what chores are left and send an email
-#Execute this function as a cron script on Friday 
 def sendemail(from_addr, to_addr_list, cc_addr_list,
               subject, message,
               login, password,
@@ -23,11 +21,12 @@ def sendemail(from_addr, to_addr_list, cc_addr_list,
     server.quit()
     return problems
 
-#update on deployed
+
 conn = sqlite3.connect("/tmp/expense.db")
 c = conn.cursor()
 
-personDict = {"Andrew":["XXXXXXX"],"Anita":["XXXXXXX"],"Ryder":["XXXXXXXX"]}
+#PersonDict = {Andrew:"andrew.mahan@colorado.edu",Anita:"abalakristnan93@gmail.com",Ryder:"tung.pham@smfa.edu"}
+personDict = {"Andrew":["andrew.mahan@colorado.edu"],"Anita":["abalakrishnan93@gmail.com"],"Ryder":["tung.pham@smfa.edu"]}
 choreDict = defaultdict(list)
 
 for row in c.execute('''select person,choreList.choreSub from weeklyChores
@@ -39,9 +38,9 @@ WHERE choreList.subComplete != 1;'''):
 fromad = "nagbot@andrewmahan.com"
 cc = ""
 subject = "Please do your chores!"
-login = "nagbot@XXXXXXXXX.com"
-password = "XXXXXXXX"
-smtpserver = "smtp.XXXXXXXXXX.com:587"
+login = "nagbot@andrewmahan.com"
+password = "Sublime44!!"
+smtpserver = "smtp.andrewmahan.com:587"
 
 for person in choreDict:
   to = personDict[person]
